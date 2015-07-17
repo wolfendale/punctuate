@@ -1,4 +1,5 @@
 _ = require 'underscore'
+fs = require 'fs'
 
 nums = [
   '+[]'
@@ -21,35 +22,30 @@ words =
   '[object Object]' : '[]+{}'
   'NaN' : '[]+{}/!![]'
 
-wrap = (t) -> "(#{t})"
-
 letter = (l) ->
-  _.chain Object.keys words
-  .reduce (m, n) ->
-    tuple = m[0]
-    ndx = n.indexOf(l) - 1 # why does this have to have a -1?
-    total = ndx + l.length
+  best = _.reduce (Object.keys words), (m, n) ->
+    ndx = n.indexOf(l)
+    total = ndx + words[n].length
     if ndx > -1
-      if total < tuple[0] then [[total, words[n]]] else m
+      if total < m[0] 
+        [total, ndx, words[n]]
+      else m
     else m
-  , [[Infinity, '']]
-  .map (tuple) ->
-    if tuple[0] is Infinity
-      # this turns any character we cant punctuate into a \uXXXX char
-      "'\\u#{('0000' + l.charCodeAt(0).toString(16)).substr -4}'"
-    else
-      "(#{tuple[1]})[#{nums[tuple[0]]}]"
-  .value()[0]
+  , [Infinity, '']
+
+  if best[0] is Infinity
+    "'\\u#{('0000' + l.charCodeAt(0).toString(16)).substr - 4}'"
+  else
+    "(#{best[2]})[#{nums[best[1]]}]"
 
 stringit = (str) ->
-  _.chain str.split ''
-  .map (l) ->
-    letter l
-  .value()
+  _.map str, letter
   .join '+'
 
-foo = stringit 'x'
+word = stringit 'js is dead cool'
 
-console.log foo
-console.log foo.length
-console.log eval foo
+console.log word
+console.log word.length
+console.log eval word
+
+fs.writeFileSync 'output.txt', word
